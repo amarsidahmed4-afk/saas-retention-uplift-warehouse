@@ -1,6 +1,6 @@
 # Limitations
 
-*Living document — update this whenever a design constraint in `.clinerules` gets bent, a modeling assumption changes, or something below stops being true. A stale limitations file is treated as a bug in this repo, not a formality. Last updated: [date of last real change, not last file touch].*
+*Living document — update this whenever a design constraint in `.clinerules` gets bent, a modeling assumption changes, or something below stops being true. A stale limitations file is treated as a bug in this repo, not a formality. Last updated: August 2026.*
 
 ## Data
 - **Everything in `seeds/` is synthetic.** Stripe/Segment/HubSpot/Zendesk-shaped, generated to be structurally realistic, not sourced from any real company's data. Headline metrics from this pipeline describe whether the pipeline is wired correctly, not whether the model works on real accounts.
@@ -8,7 +8,8 @@
 - **The bulk of the non-pilot data has deliberately confounded treatment assignment** (CSMs semi-target healthier at-risk accounts, mirroring real CS behavior). This is intentional — it's what makes the propensity-adjustment / calibration story real rather than trivial — but it means naive comparisons (treated vs. untreated accounts, no adjustment) anywhere in this repo would be actively misleading. Any such comparison should be flagged, not just accepted, if one shows up in a query or notebook.
 
 ## Modeling
-- [Fill in once v1.1's model exists: sample size, calibration method, which features are still treated as proxies, any known weak points in the propensity adjustment.]
+- **The Uplift Estimate (CATE) relies on the overlap assumption.** The Propensity-Adjusted T-Learner uses Inverse Probability Weighting (IPW) to correct for the bulk data's bias. However, this assumes that every type of account has at least a *non-zero* chance of receiving a CS touch. If a segment of accounts (e.g., Starter tier with 0 logins) *never* gets called in the real world, the propensity score hits 0, IPW weights explode to infinity, and the math breaks. We currently clip propensities at `[0.05, 0.95]` to artificially prevent this, but this clamping distorts the truth for extreme outliers.
+- **Proxy features aren't perfect.** We treat `ticket_volume` and `severe_tickets` as negative health signals, and `login_frequency` as a positive one. In reality, high ticket volume might just mean an account is highly engaged (a positive signal). The model doesn't know the difference; it only knows correlation.
 - No claim in this repo about "who to reach out to" should be read as validated on real accounts until it's been checked against real logged CS outcomes — that's a prerequisite for production use, not a nice-to-have.
 
 ## Architecture
@@ -19,3 +20,4 @@
 - Real logged CS-touch outcomes to calibrate against, not just the synthetic pilot.
 - A sample size large enough for CATE estimation specifically — bigger than what's needed for plain churn classification, since it's estimating a difference of two noisy quantities.
 - Independent review of the propensity-adjustment logic against the real (not synthetic) confounding pattern in actual CS assignment behavior, since the real pattern won't exactly match what the synthetic generator assumes.
+
