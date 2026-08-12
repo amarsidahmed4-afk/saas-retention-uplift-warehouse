@@ -1,0 +1,27 @@
+# Environments
+venv/
+.env
+
+# Cache
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# dbt
+target/
+dbt_packages/
+logs/
+
+# DuckDB Warehouse
+*.duckdb
+*.duckdb.wal
+
+# Seed Data (Optional - depending if we want to commit the generated seeds or not. Usually yes for a demo, but excluding for now to keep history clean if they change)
+# seeds/*.csv 
+
+# Repo Starter Docs
+PLAN.md
+TASKS.md
+repo-auditor.md
+.user.yml
+.clinerules

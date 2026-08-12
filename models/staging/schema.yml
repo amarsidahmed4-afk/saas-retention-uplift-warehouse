@@ -1,0 +1,97 @@
+version: 2
+
+models:
+  - name: stg_stripe__subscriptions
+    description: "Account-level subscription data, including outcome (churned) and ARR"
+    columns:
+      - name: account_id
+        description: "Primary key"
+        tests:
+          - unique
+          - not_null
+      - name: arr
+        description: "Annual Recurring Revenue in USD"
+        tests:
+          - not_null
+      - name: plan_tier
+        description: "Subscription tier. Treated as a categorical feature downstream."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Starter', 'Professional', 'Enterprise']
+      - name: seats
+        description: "Number of seats"
+        tests:
+          - not_null
+      - name: billing_interval
+        description: "Billing interval"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['monthly', 'annual']
+      - name: is_churned
+        description: "1 if churned, 0 otherwise (Outcome variable)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
+
+  - name: stg_segment__usage_events
+    description: "Aggregated usage metrics"
+    columns:
+      - name: account_id
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('stg_stripe__subscriptions')
+              field: account_id
+      - name: login_frequency
+        tests:
+          - not_null
+      - name: feature_adoption
+        tests:
+          - not_null
+      - name: session_depth
+        tests:
+          - not_null
+
+  - name: stg_hubspot__cs_touches
+    description: "Treatment assignment: CS touch"
+    columns:
+      - name: account_id
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('stg_stripe__subscriptions')
+              field: account_id
+      - name: is_treated
+        description: "1 if account received CS touch, 0 otherwise (Treatment variable)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
+      - name: is_pilot
+        description: "1 if account is in the truly randomized pilot, 0 for bulk confounded data"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
+
+  - name: stg_zendesk__support_tickets
+    description: "Support ticket volume and severity"
+    columns:
+      - name: account_id
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('stg_stripe__subscriptions')
+              field: account_id
+      - name: ticket_volume
+        tests:
+          - not_null
+      - name: severe_tickets
+        tests:
+          - not_null

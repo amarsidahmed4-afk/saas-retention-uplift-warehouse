@@ -1,0 +1,25 @@
+name: 'saas_retention_uplift'
+version: '1.0.0'
+config-version: 2
+
+profile: 'saas_retention_uplift'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  saas_retention_uplift:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      +materialized: table

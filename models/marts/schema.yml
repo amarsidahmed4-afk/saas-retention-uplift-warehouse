@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: fct_account_retention
+    description: "One row per account, combining features (ARR, usage, support), treatment (CS touch), and outcome (churned) for modeling."
+    columns:
+      - name: account_id
+        tests:
+          - unique
+          - not_null
+      - name: arr
+        tests:
+          - not_null
+      - name: is_treated
+        tests:
+          - not_null
+      - name: is_pilot
+        tests:
+          - not_null
+      - name: is_churned
+        tests:
+          - not_null
