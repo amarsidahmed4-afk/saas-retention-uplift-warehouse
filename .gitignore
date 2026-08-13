@@ -25,3 +25,5 @@ TASKS.md
 repo-auditor.md
 .user.yml
 .clinerules
+work_summary_*.md
+audit_report_*.md
