@@ -19,7 +19,6 @@ models:
   saas_retention_uplift:
     staging:
       +materialized: view
-    intermediate:
-      +materialized: view
     marts:
       +materialized: table
+

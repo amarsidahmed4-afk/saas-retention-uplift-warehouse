@@ -3,22 +3,25 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
+from sklearn.calibration import CalibratedClassifierCV
 
 class PropensityAdjustedTLearner:
     """
     A T-learner that uses Inverse Probability Weighting (IPW) to adjust for 
-    treatment assignment bias (confounding) in the bulk data.
+    treatment assignment bias (confounding) in the bulk data, and calibrates
+    against an unconfounded pilot subset.
     """
     def __init__(self, numeric_features, categorical_features):
         self.numeric_features = numeric_features
         self.categorical_features = categorical_features
         
+        # Added StandardScaler to fix ConvergenceWarnings and improve numeric feature handling
         self.preprocessor = ColumnTransformer(
             transformers=[
-                ('num', 'passthrough', numeric_features),
+                ('num', StandardScaler(), numeric_features),
                 ('cat', OneHotEncoder(drop='first', handle_unknown='ignore'), categorical_features)
             ])
             
@@ -36,20 +39,42 @@ class PropensityAdjustedTLearner:
             ('preprocessor', self.preprocessor),
             ('classifier', LogisticRegression(max_iter=1000))
         ])
+        
+        self.calibrated_model_0 = None
+        self.calibrated_model_1 = None
 
-    def fit(self, X, y, w):
-        self.propensity_model.fit(X, w)
-        propensities = self.propensity_model.predict_proba(X)[:, 1]
+
+    def fit(self, X_bulk, y_bulk, w_bulk, X_pilot=None, y_pilot=None, w_pilot=None):
+        # 1. Fit Propensity Model on Bulk
+        self.propensity_model.fit(X_bulk, w_bulk)
+        propensities = self.propensity_model.predict_proba(X_bulk)[:, 1]
         propensities = np.clip(propensities, 0.05, 0.95)
         
-        weights = np.where(w == 1, 1.0 / propensities, 1.0 / (1.0 - propensities))
+        # 2. IPW Weighting
+        weights = np.where(w_bulk == 1, 1.0 / propensities, 1.0 / (1.0 - propensities))
         
-        X_0, y_0, weights_0 = X[w == 0], y[w == 0], weights[w == 0]
+        # 3. Fit base models on bulk with IPW
+        X_0, y_0, weights_0 = X_bulk[w_bulk == 0], y_bulk[w_bulk == 0], weights[w_bulk == 0]
         self.model_0.fit(X_0, y_0, classifier__sample_weight=weights_0)
         
-        X_1, y_1, weights_1 = X[w == 1], y[w == 1], weights[w == 1]
+        X_1, y_1, weights_1 = X_bulk[w_bulk == 1], y_bulk[w_bulk == 1], weights[w_bulk == 1]
         self.model_1.fit(X_1, y_1, classifier__sample_weight=weights_1)
         
+        # 4. Calibrate against the randomized pilot subset (if provided)
+        if X_pilot is not None and y_pilot is not None and w_pilot is not None:
+            # Calibrate control model
+            X_pilot_0, y_pilot_0 = X_pilot[w_pilot == 0], y_pilot[w_pilot == 0]
+            self.calibrated_model_0 = CalibratedClassifierCV(estimator=self.model_0, cv='prefit')
+            self.calibrated_model_0.fit(X_pilot_0, y_pilot_0)
+            
+            # Calibrate treated model
+            X_pilot_1, y_pilot_1 = X_pilot[w_pilot == 1], y_pilot[w_pilot == 1]
+            self.calibrated_model_1 = CalibratedClassifierCV(estimator=self.model_1, cv='prefit')
+            self.calibrated_model_1.fit(X_pilot_1, y_pilot_1)
+        else:
+            self.calibrated_model_0 = self.model_0
+            self.calibrated_model_1 = self.model_1
+            
         return self
 
     def predict_cate(self, X):
