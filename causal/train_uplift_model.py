@@ -82,8 +82,8 @@ class PropensityAdjustedTLearner:
         Predict Conditional Average Treatment Effect (CATE)
         Since the outcome is 'churned', CATE = P(Churn|Control) - P(Churn|Treated)
         """
-        prob_churn_0 = self.model_0.predict_proba(X)[:, 1]
-        prob_churn_1 = self.model_1.predict_proba(X)[:, 1]
+        prob_churn_0 = self.calibrated_model_0.predict_proba(X)[:, 1]
+        prob_churn_1 = self.calibrated_model_1.predict_proba(X)[:, 1]
         return prob_churn_0 - prob_churn_1
         
     def predict_quadrants(self, X, risk_threshold=0.5, uplift_threshold=0.1):
@@ -93,7 +93,7 @@ class PropensityAdjustedTLearner:
         Risk Threshold: Baseline probability of churn (under control) above which an account is 'at-risk'.
         Uplift Threshold: CATE (churn reduction) above which an account is considered 'persuadable'.
         """
-        prob_churn_0 = self.model_0.predict_proba(X)[:, 1]
+        prob_churn_0 = self.calibrated_model_0.predict_proba(X)[:, 1]
         cate = self.predict_cate(X)
         
         quadrants = []
