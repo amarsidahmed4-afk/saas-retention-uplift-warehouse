@@ -7,6 +7,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.frozen import FrozenEstimator
 
 class PropensityAdjustedTLearner:
     """
@@ -64,12 +65,12 @@ class PropensityAdjustedTLearner:
         if X_pilot is not None and y_pilot is not None and w_pilot is not None:
             # Calibrate control model
             X_pilot_0, y_pilot_0 = X_pilot[w_pilot == 0], y_pilot[w_pilot == 0]
-            self.calibrated_model_0 = CalibratedClassifierCV(estimator=self.model_0, cv='prefit')
+            self.calibrated_model_0 = CalibratedClassifierCV(estimator=FrozenEstimator(self.model_0))
             self.calibrated_model_0.fit(X_pilot_0, y_pilot_0)
             
             # Calibrate treated model
             X_pilot_1, y_pilot_1 = X_pilot[w_pilot == 1], y_pilot[w_pilot == 1]
-            self.calibrated_model_1 = CalibratedClassifierCV(estimator=self.model_1, cv='prefit')
+            self.calibrated_model_1 = CalibratedClassifierCV(estimator=FrozenEstimator(self.model_1))
             self.calibrated_model_1.fit(X_pilot_1, y_pilot_1)
         else:
             self.calibrated_model_0 = self.model_0
@@ -131,10 +132,16 @@ def train_t_learner(db_path="warehouse.duckdb"):
     w_train = df_bulk['is_treated']
     
     learner = PropensityAdjustedTLearner(numeric_features, categorical_features)
-    learner.fit(X_train, y_train, w_train)
+    
+    # Extract pilot data for calibration
+    X_pilot = df_pilot[numeric_features + categorical_features]
+    y_pilot = df_pilot['is_churned']
+    w_pilot = df_pilot['is_treated']
+    
+    # Fit and calibrate
+    learner.fit(X_train, y_train, w_train, X_pilot=X_pilot, y_pilot=y_pilot, w_pilot=w_pilot)
     
     # Evaluate on pilot
-    X_pilot = df_pilot[numeric_features + categorical_features]
     cate_pilot = learner.predict_cate(X_pilot)
     quadrants = learner.predict_quadrants(X_pilot)
     
