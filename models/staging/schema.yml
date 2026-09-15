@@ -35,17 +35,26 @@ models:
           - not_null
           - accepted_values:
               values: [0, 1]
+      - name: snapshot_date
+        description: "Date of cohort baseline evaluation"
+        tests:
+          - not_null
+      - name: churn_date
+        description: "Date account churned (null if retained)"
 
   - name: stg_segment__usage_events
-    description: "Aggregated usage metrics"
+    description: "Timestamped usage events per account"
     columns:
       - name: account_id
         tests:
-          - unique
           - not_null
           - relationships:
               to: ref('stg_stripe__subscriptions')
               field: account_id
+      - name: event_timestamp
+        description: "Date when usage event occurred"
+        tests:
+          - not_null
       - name: login_frequency
         tests:
           - not_null
@@ -57,7 +66,7 @@ models:
           - not_null
 
   - name: stg_hubspot__cs_touches
-    description: "Treatment assignment: CS touch"
+    description: "Treatment assignment: CS touch and timestamp"
     columns:
       - name: account_id
         tests:
@@ -78,17 +87,22 @@ models:
           - not_null
           - accepted_values:
               values: [0, 1]
+      - name: treatment_date
+        description: "Date of CS touch intervention (null if untreated)"
 
   - name: stg_zendesk__support_tickets
-    description: "Support ticket volume and severity"
+    description: "Timestamped support tickets per account"
     columns:
       - name: account_id
         tests:
-          - unique
           - not_null
           - relationships:
               to: ref('stg_stripe__subscriptions')
               field: account_id
+      - name: ticket_timestamp
+        description: "Date ticket was logged"
+        tests:
+          - not_null
       - name: ticket_volume
         tests:
           - not_null

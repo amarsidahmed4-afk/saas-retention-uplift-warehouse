@@ -9,7 +9,9 @@ renamed as (
         plan_tier::varchar as plan_tier,
         seats::integer as seats,
         billing_interval::varchar as billing_interval,
-        churned::integer as is_churned
+        churned::integer as is_churned,
+        snapshot_date::date as snapshot_date,
+        churn_date::date as churn_date
     from source
 )
 

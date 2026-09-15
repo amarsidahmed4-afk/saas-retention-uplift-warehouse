@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: int_account_pre_treatment_usage
+    description: "Account-level pre-treatment usage metrics, filtered to eliminate temporal leakage."
+    columns:
+      - name: account_id
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('stg_stripe__subscriptions')
+              field: account_id
+      - name: login_frequency
+        tests:
+          - not_null
+      - name: feature_adoption
+        tests:
+          - not_null
+      - name: session_depth
+        tests:
+          - not_null
+
+  - name: int_account_pre_treatment_tickets
+    description: "Account-level pre-treatment support ticket metrics, filtered to eliminate temporal leakage."
+    columns:
+      - name: account_id
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('stg_stripe__subscriptions')
+              field: account_id
+      - name: ticket_volume
+        tests:
+          - not_null
+      - name: severe_tickets
+        tests:
+          - not_null

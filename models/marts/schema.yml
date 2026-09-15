@@ -20,3 +20,6 @@ models:
       - name: is_churned
         tests:
           - not_null
+      - name: snapshot_date
+        tests:
+          - not_null

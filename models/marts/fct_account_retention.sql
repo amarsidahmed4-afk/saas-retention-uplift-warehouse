@@ -3,7 +3,7 @@ with subs as (
 ),
 
 usage as (
-    select * from {{ ref('stg_segment__usage_events') }}
+    select * from {{ ref('int_account_pre_treatment_usage') }}
 ),
 
 touches as (
@@ -11,27 +11,30 @@ touches as (
 ),
 
 tickets as (
-    select * from {{ ref('stg_zendesk__support_tickets') }}
+    select * from {{ ref('int_account_pre_treatment_tickets') }}
 ),
 
 joined as (
     select
         s.account_id,
         
-        -- Subscription info
+        -- Subscription & Timestamps
         s.arr,
         s.plan_tier,
         s.seats,
         s.billing_interval,
+        s.snapshot_date,
+        h.treatment_date,
+        s.churn_date,
         
-        -- Usage info
-        u.login_frequency,
-        u.feature_adoption,
-        u.session_depth,
+        -- Pre-treatment Usage info
+        coalesce(u.login_frequency, 0) as login_frequency,
+        coalesce(u.feature_adoption, 0) as feature_adoption,
+        coalesce(u.session_depth, 0.0) as session_depth,
         
-        -- Ticket info
-        t.ticket_volume,
-        t.severe_tickets,
+        -- Pre-treatment Ticket info
+        coalesce(t.ticket_volume, 0) as ticket_volume,
+        coalesce(t.severe_tickets, 0) as severe_tickets,
         
         -- Treatment and Pilot Status
         h.is_treated,

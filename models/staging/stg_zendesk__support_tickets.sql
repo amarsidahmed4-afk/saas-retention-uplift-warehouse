@@ -5,6 +5,7 @@ with source as (
 renamed as (
     select
         account_id::varchar as account_id,
+        ticket_timestamp::date as ticket_timestamp,
         ticket_volume::integer as ticket_volume,
         severe_tickets::integer as severe_tickets
     from source

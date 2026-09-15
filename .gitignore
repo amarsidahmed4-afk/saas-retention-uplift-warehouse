@@ -17,13 +17,13 @@ logs/
 *.duckdb.wal
 
 # Seed Data (Optional - depending if we want to commit the generated seeds or not. Usually yes for a demo, but excluding for now to keep history clean if they change)
-# seeds/*.csv 
+# seeds/*.csv
 
 # Repo Starter Docs
 PLAN.md
 TASKS.md
 repo-auditor.md
 .user.yml
-.clinerules
+RULES.md
 work_summary_*.md
 audit_report_*.md

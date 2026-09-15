@@ -5,6 +5,7 @@ with source as (
 renamed as (
     select
         account_id::varchar as account_id,
+        event_timestamp::date as event_timestamp,
         login_frequency::integer as login_frequency,
         feature_adoption::integer as feature_adoption,
         session_depth::decimal(10,2) as session_depth
