@@ -2,7 +2,7 @@ agate==1.9.1
 annotated-types==0.8.0
 attrs==26.1.0
 babel==2.18.0
-certifi==2026.7.22
+certifi==2026.10.18
 charset-normalizer==3.4.9
 click==8.4.2
 colorama==0.4.6
@@ -33,7 +33,7 @@ msgpack==1.2.1
 narwhals==2.24.0
 networkx==3.6.1
 numpy==2.5.2
-opentelemetry-api==1.44.0
+opentelemetry-api==1.45.1
 orderly-set==5.5.0
 packaging==26.3
 pandas==3.0.5
